@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 250 25% 4%;
+    --foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+    
+    --radius: 0.75rem;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #030014;
+  color: #f8fafc;
+  overflow-x: hidden;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  user-select: none;
+}
+
+/* Custom cyber scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #030014;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00ffff;
+  box-shadow: 0 0 10px #00ffff;
+}
+
+/* Spline container smooth overlay masking */
+.spline-outer-container {
+  mask-image: radial-gradient(circle at center, black 50%, transparent 95%);
+  -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 95%);
+}
+
+.hero-identity {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  animation: identity-rise 900ms ease-out both;
+}
+
+.hero-name,
+.hero-role {
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-name {
+  font-family: 'Space Grotesk', 'Outfit', sans-serif;
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 800;
+  line-height: 0.95;
+  background-image: linear-gradient(90deg, #ffffff 0%, #93c5fd 38%, #d1fae5 62%, #ffffff 100%);
+  animation: text-sheen 5s ease-in-out infinite;
+  text-shadow: 0 18px 55px rgba(147, 197, 253, 0.24);
+}
+
+.hero-role {
+  font-family: 'Space Grotesk', 'Outfit', sans-serif;
+  font-size: clamp(0.95rem, 2vw, 1.35rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  background-image: linear-gradient(90deg, #cbd5e1 0%, #ffffff 50%, #bae6fd 100%);
+  animation: text-sheen 5s ease-in-out infinite reverse;
+}
+
+@keyframes identity-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes text-sheen {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+}
+
+.glow-glow {
+  animation: pulse-slow 4s infinite ease-in-out;
+}
