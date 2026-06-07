@@ -13,6 +13,7 @@ import PromptingIsAllYouNeed from "@/components/ui/PromptingIsAllYouNeed";
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(true);
+  const baseUrl = import.meta.env.BASE_URL;
 
   const navItems = [
     { label: 'Home', href: '#hero' },
@@ -78,7 +79,7 @@ export default function App() {
                   {/* Centered Spline Viewport */}
                   <div className="w-full h-full relative spline-outer-container flex items-center justify-center">
                     <SplineScene
-                      scene="/scene.splinecode"
+                      scene={`${baseUrl}scene.splinecode`}
                       className="w-full h-full object-cover scale-[1.08]"
                     />
                   </div>
@@ -218,7 +219,7 @@ export default function App() {
                     handle="harish_dev"
                     status="Building something cool"
                     contactText="Get in Touch"
-                    avatarUrl="/profile.png"
+                    avatarUrl={`${baseUrl}profile.png`}
                     showUserInfo={true}
                     enableTilt={true}
                     enableMobileTilt={true}
