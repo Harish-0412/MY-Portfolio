@@ -1,9 +1,11 @@
 import { SplineScene } from "@/components/ui/splite";
 import { Card } from "@/components/ui/card";
 import { Bot, ExternalLink, Code2, Brain, Cpu, Rocket, Sparkles, Layers, GraduationCap, Trophy, Terminal, Smartphone, Database, BarChart3, Palette, Wrench, Send, Briefcase, Mail, GitBranch } from 'lucide-react';
-import Iridescence from "@/components/ui/Iridescence";
+import Aurora from "@/components/ui/Aurora";
 import PillNav from "@/components/ui/PillNav";
 import ProfileCard from "@/components/ui/ProfileCard";
+import ScrollVelocity from "@/components/ui/ScrollVelocity";
+import CertificationsTabs from "@/components/ui/CertificationsTabs";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/react.svg";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,13 +38,13 @@ export default function App() {
             animate={{ opacity: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
           >
-            {/* Background Iridescence */}
+            {/* Background Aurora */}
             <div className="fixed inset-0 -z-10 pointer-events-none">
-              <Iridescence
-                color={[0.4, 0.5, 0.7]}
-                mouseReact
-                amplitude={0.1}
-                speed={1}
+              <Aurora
+                colorStops={["#7cff67","#B497CF","#5227FF"]}
+                blend={0.5}
+                amplitude={1.0}
+                speed={0.5}
               />
             </div>
 
@@ -97,31 +99,33 @@ export default function App() {
               </section>
 
               {/* STATS SECTION (First Impression) */}
-              <section className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-                {[
-                  { label: "Research Internship", value: "01+", icon: <GraduationCap className="w-4 h-4" /> },
-                  { label: "Hackathons", value: "05+", icon: <Rocket className="w-4 h-4" /> },
-                  { label: "National Top 10", value: "02", icon: <Trophy className="w-4 h-4" /> },
-                  { label: "Podium Finishes", value: "03", icon: <Sparkles className="w-4 h-4" /> },
-                  { label: "Projects Built", value: "10+", icon: <Code2 className="w-4 h-4" /> },
-                  { label: "Domains Expertise", value: "04+", icon: <Layers className="w-4 h-4" /> },
-                ].map((stat, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: i * 0.05 }}
-                    className="rounded-2xl border border-white/10 bg-white/10 p-4 flex flex-col items-center text-center gap-2"
-                  >
-                    <div className="p-2 rounded-lg bg-white/20 text-white/80">
-                      {stat.icon}
-                    </div>
-                    <p className="text-2xl font-black italic text-white">{stat.value}</p>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/60 leading-tight">{stat.label}</p>
-                  </motion.div>
-                ))}
-              </section>
+              <ScrollVelocity
+                texts={[
+                  <div className="flex gap-4 px-2">
+                    {[
+                      { label: "Research Internship", value: "01+", icon: <GraduationCap className="w-4 h-4" /> },
+                      { label: "Hackathons", value: "05+", icon: <Rocket className="w-4 h-4" /> },
+                      { label: "National Top 10", value: "02", icon: <Trophy className="w-4 h-4" /> },
+                      { label: "Podium Finishes", value: "03", icon: <Sparkles className="w-4 h-4" /> },
+                      { label: "Projects Built", value: "10+", icon: <Code2 className="w-4 h-4" /> },
+                      { label: "Domains Expertise", value: "04+", icon: <Layers className="w-4 h-4" /> },
+                    ].map((stat, i) => (
+                      <div
+                        key={i}
+                        className="w-48 rounded-2xl border border-white/10 bg-white/10 p-4 flex flex-col items-center text-center gap-2"
+                      >
+                        <div className="p-2 rounded-lg bg-white/20 text-white/80">
+                          {stat.icon}
+                        </div>
+                        <p className="text-2xl font-black italic text-white">{stat.value}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60 leading-tight">{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                ]}
+                velocity={20}
+                className=""
+              />
 
               {/* PERSONAL DETAILS SECTION */}
               <section id="about" className="scroll-mt-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -409,64 +413,7 @@ export default function App() {
                   <div className="h-1 w-24 bg-white" />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {[
-                    {
-                      provider: "Coursera",
-                      title: "Machine Learning Specialization",
-                      instructor: "Andrew Ng",
-                      institution: "Stanford University",
-                      topics: ["Supervised Learning", "Unsupervised Learning", "Model Evaluation", "ML Foundations"]
-                    },
-                    {
-                      provider: "Coursera",
-                      title: "Advanced Deep Learning",
-                      instructor: "Andrew Ng",
-                      institution: "Stanford University",
-                      topics: ["Neural Networks", "CNNs", "Sequence Models", "Transformer Architectures"]
-                    },
-                    {
-                      provider: "IBM Professional Certificate",
-                      title: "JavaScript Backend Developer",
-                      topics: ["Backend Development", "Node.js", "Express.js", "REST APIs", "Server-Side Programming"]
-                    },
-                    {
-                      provider: "Coursera - Google",
-                      title: "Google Prompting Essentials",
-                      topics: ["Prompt Engineering", "AI Tools", "Software Versioning", "Multimodal Prompts", "AI Personalization"]
-                    },
-                    {
-                      provider: "Coursera - IBM",
-                      title: "IBM RAG and Agentic AI Professional Certificate",
-                      instructor: "IBM",
-                      institution: "Coursera",
-                      topics: ["RAG", "Agentic AI", "Generative AI", "AI Tools", "Software Versioning", "Multimodal Prompts", "AI Personalization"]
-                    }
-                  ].map((cert, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      className="p-8 rounded-3xl border border-white/10 bg-white/5 flex flex-col gap-6"
-                    >
-                      <div className="space-y-1">
-                        <p className="font-mono text-xs text-white/60 uppercase tracking-widest">{cert.provider}</p>
-                        <h3 className="text-2xl font-black uppercase italic text-white tracking-tighter">{cert.title}</h3>
-                        {cert.instructor && (
-                          <p className="text-sm text-white/80 font-bold uppercase italic">Instructor: {cert.instructor} // {cert.institution}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {cert.topics.map((topic, ti) => (
-                          <span key={ti} className="px-3 py-1 rounded-lg bg-white/10 border border-white/10 text-[10px] font-bold uppercase tracking-wider text-white/50">
-                            {topic}
-                          </span>
-                        ))}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                <CertificationsTabs />
               </section>
 
               {/* PROJECTS SECTION */}
