@@ -1,129 +1,115 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    --background: 250 25% 4%;
-    --foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-    
-    --radius: 0.75rem;
-  }
+@font-face {
+  font-family: "Inter Display";
+  src: url("./assets/fonts/inter-display-500.woff2") format("woff2");
+  font-weight: 100 500;
+  font-style: normal;
+  font-display: swap;
 }
-
+@font-face {
+  font-family: "Inter Display";
+  src: url("./assets/fonts/inter-display-600.woff2") format("woff2");
+  font-weight: 550 650;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter Display";
+  src: url("./assets/fonts/inter-display-700.woff2") format("woff2");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  font-family: "Inter Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #fafafa;
+  background: #090909;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --ink: #fafafa;
+  --muted: #a1a1a1;
+  --line: #2c2c2c;
+  --page-padding: clamp(20px, 2.3vw, 40px);
+}
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
-
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 105px;
+}
 body {
   margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: #030014;
-  color: #f8fafc;
-  overflow-x: hidden;
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  user-select: none;
+  min-width: 320px;
 }
-
-/* Custom cyber scrollbar */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  background: none;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+::selection {
+  color: #090909;
+  background: #fafafa;
+}
+:focus-visible {
+  outline: 2px solid #fafafa;
+  outline-offset: 6px;
+}
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #030014;
+  background: #090909;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: #5d5d5d;
+  border-radius: 8px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #00ffff;
-  box-shadow: 0 0 10px #00ffff;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
-
-/* Spline container smooth overlay masking */
-.spline-outer-container {
-  mask-image: radial-gradient(circle at center, black 50%, transparent 95%);
-  -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 95%);
-}
-
-.hero-identity {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-top: 18px;
-  animation: identity-rise 900ms ease-out both;
-}
-
-.hero-name,
-.hero-role {
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.hero-name {
-  font-family: 'Space Grotesk', 'Outfit', sans-serif;
-  font-size: clamp(2rem, 5vw, 4.5rem);
-  font-weight: 800;
-  line-height: 0.95;
-  background-image: linear-gradient(90deg, #ffffff 0%, #93c5fd 38%, #d1fae5 62%, #ffffff 100%);
-  animation: text-sheen 5s ease-in-out infinite;
-  text-shadow: 0 18px 55px rgba(147, 197, 253, 0.24);
-}
-
-.hero-role {
-  font-family: 'Space Grotesk', 'Outfit', sans-serif;
-  font-size: clamp(0.95rem, 2vw, 1.35rem);
-  font-weight: 700;
-  text-transform: uppercase;
-  background-image: linear-gradient(90deg, #cbd5e1 0%, #ffffff 50%, #bae6fd 100%);
-  animation: text-sheen 5s ease-in-out infinite reverse;
-}
-
-@keyframes identity-rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-}
-
-@keyframes text-sheen {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.95);
-  }
-}
-
-.glow-glow {
-  animation: pulse-slow 4s infinite ease-in-out;
 }

@@ -1,597 +1,1137 @@
-import { SplineScene } from "@/components/ui/splite";
-import { Card } from "@/components/ui/card";
-import { Bot, ExternalLink, Code2, Brain, Cpu, Rocket, Sparkles, Layers, GraduationCap, Trophy, Terminal, Smartphone, Database, BarChart3, Palette, Wrench, Send, Briefcase, Mail, GitBranch } from 'lucide-react';
-import Aurora from "@/components/ui/Aurora";
-import PillNav from "@/components/ui/PillNav";
-import ProfileCard from "@/components/ui/ProfileCard";
-import ScrollVelocity from "@/components/ui/ScrollVelocity";
-import CertificationsTabs from "@/components/ui/CertificationsTabs";
-import { Button } from "@/components/ui/button";
-import logo from "@/assets/react.svg";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import IntroPreloader from "@/components/ui/IntroPreloader";
-import PromptingIsAllYouNeed from "@/components/ui/PromptingIsAllYouNeed";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpRight,
+  Check,
+  Copy,
+  Pause,
+  Play,
+  Plus,
+  X,
+} from "lucide-react";
+import ProjectArtwork from "./components/ProjectArtwork";
+import InteractiveGrid from "./components/InteractiveGrid";
+import motionReel from "../gxybd2yBLBRv3ATlrNF36QPi9k4.mp4";
+import motionReelPoster from "./assets/reel-poster.jpg";
+import {
+  achievements,
+  capabilities,
+  credentials,
+  experience,
+  identity,
+  projects,
+  stats,
+  type Credential,
+  type Project,
+} from "./data/portfolio";
+import "./App.css";
 
-export default function App() {
-  const [showIntro, setShowIntro] = useState(true);
-  const baseUrl = import.meta.env.BASE_URL;
+const ease = [0.22, 1, 0.36, 1] as const;
+const navigation = [
+  { label: "/About me", href: "#about", number: "01" },
+  { label: "/Work", href: "#work", number: "02" },
+  { label: "/Expertise", href: "#expertise", number: "03" },
+];
 
-  const navItems = [
-    { label: 'Home', href: '#hero' },
-    { label: 'About', href: '#about' },
-    { label: 'Skills', href: '#skills' },
-    { label: 'Experience', href: '#experience' },
-    { label: 'Achievements', href: '#achievements' },
-    { label: 'Projects', href: '#projects' },
-  ];
+function RollingText({ children }: { children: ReactNode }) {
+  return (
+    <span className="rolling-text">
+      <span>{children}</span>
+      <span aria-hidden="true">{children}</span>
+    </span>
+  );
+}
+
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const reduced = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduced ? false : { opacity: 0, y: 48 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{ duration: 1.1, delay, ease }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function SectionTitle({
+  children,
+  number,
+}: {
+  children: string;
+  number: string;
+}) {
+  const reduced = useReducedMotion();
+  return (
+    <div className="section-title">
+      <span className="section-number">/{number}</span>
+      <h2 aria-label={children}>
+        {children.split(" ").map((word, index) => (
+          <span className="title-word" key={index}>
+            <motion.span
+              aria-hidden="true"
+              initial={reduced ? false : { y: "110%" }}
+              whileInView={{ y: "0%" }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.1, delay: index * 0.07, ease }}
+            >
+              {word}&nbsp;
+            </motion.span>
+          </span>
+        ))}
+      </h2>
+    </div>
+  );
+}
+
+function LocalTime() {
+  const format = () =>
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(new Date());
+  const [time, setTime] = useState(format);
+  useEffect(() => {
+    const interval = window.setInterval(() => setTime(format()), 30000);
+    return () => window.clearInterval(interval);
+  }, []);
+  return (
+    <span className="local-time">
+      <span>/Local time</span>
+      <time>{time}</time>
+      <span>(IST)</span>
+    </span>
+  );
+}
+
+function MotionReel() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const reduced = useReducedMotion();
+  const [visible, setVisible] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [manualPlayback, setManualPlayback] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold: 0.05 },
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const syncPlayback = () => {
+      if (
+        visible &&
+        document.visibilityState === "visible" &&
+        (manualPlayback ?? !reduced)
+      ) {
+        void video.play().catch(() => setPlaying(false));
+      } else {
+        video.pause();
+      }
+    };
+    syncPlayback();
+    document.addEventListener("visibilitychange", syncPlayback);
+    return () => {
+      document.removeEventListener("visibilitychange", syncPlayback);
+      video.pause();
+    };
+  }, [visible, reduced, manualPlayback]);
+
+  function togglePlayback() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      setManualPlayback(true);
+      void video.play().catch(() => setPlaying(false));
+    } else {
+      setManualPlayback(false);
+      video.pause();
+    }
+  }
 
   return (
-    <div className="relative min-h-screen text-white overflow-x-hidden selection:bg-white/10 selection:text-white">
-      <AnimatePresence mode="wait">
-        {showIntro ? (
-          <IntroPreloader key="preloader" onComplete={() => setShowIntro(false)} />
-        ) : (
+    <section className="reel-section" aria-label="Motion reel">
+      <motion.div
+        className="reel-frame"
+        initial={reduced ? false : { scale: 0 }}
+        whileInView={{ scale: 1 }}
+        viewport={{ once: true, amount: 0.08 }}
+        transition={{ duration: 1.1, ease }}
+      >
+        <video
+          ref={videoRef}
+          src={motionReel}
+          poster={motionReelPoster}
+          width={1080}
+          height={1350}
+          autoPlay={!reduced}
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-label="Looping black-and-white typography animation"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+        />
+        <button
+          className="reel-control"
+          type="button"
+          onClick={togglePlayback}
+          aria-label={playing ? "Pause motion reel" : "Play motion reel"}
+        >
+          {playing ? <Pause size={14} /> : <Play size={14} />}
+          <span>{playing ? "Pause" : "Play"}</span>
+        </button>
+      </motion.div>
+    </section>
+  );
+}
+
+function Cursor() {
+  const x = useMotionValue(-100);
+  const y = useMotionValue(-100);
+  const springX = useSpring(x, { stiffness: 450, damping: 35 });
+  const springY = useSpring(y, { stiffness: 450, damping: 35 });
+  const [hovered, setHovered] = useState(false);
+  useEffect(() => {
+    const move = (event: MouseEvent) => {
+      x.set(event.clientX);
+      y.set(event.clientY);
+      setHovered(
+        Boolean((event.target as Element).closest("a, button, summary")),
+      );
+    };
+    const leave = () => {
+      x.set(-100);
+      y.set(-100);
+    };
+    window.addEventListener("mousemove", move);
+    document.addEventListener("mouseleave", leave);
+    return () => {
+      window.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseleave", leave);
+    };
+  }, [x, y]);
+  return (
+    <motion.div
+      aria-hidden="true"
+      className={`cursor ${hovered ? "cursor-active" : ""}`}
+      style={{ left: springX, top: springY }}
+    />
+  );
+}
+
+type ActiveDetail =
+  | { kind: "project"; project: Project }
+  | { kind: "certification"; credential: Credential };
+
+function detailFromHash(): ActiveDetail | undefined {
+  const project = projects.find(
+    (item) => window.location.hash === `#project/${item.slug}`,
+  );
+  if (project) return { kind: "project", project };
+  const credential = credentials.find(
+    (item) => window.location.hash === `#certification/${item.id}`,
+  );
+  if (credential) return { kind: "certification", credential };
+  return undefined;
+}
+
+function DetailDialog({
+  detail,
+  onClose,
+}: {
+  detail: ActiveDetail | undefined;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const reduced = useReducedMotion();
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!detail || !dialog) return;
+    dialog.showModal();
+    dialog.scrollTop = 0;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [detail]);
+  return (
+    <dialog
+      className={`project-dialog ${detail?.kind === "certification" ? "credential-dialog" : ""}`}
+      ref={ref}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      aria-labelledby="detail-dialog-title"
+    >
+      {detail && (
+        <div
+          className={`project-detail ${detail.kind === "certification" ? "credential-detail" : ""}`}
+        >
+          <div className="detail-nav">
+            <span>
+              HARISH K /{" "}
+              {detail.kind === "project" ? "SELECTED WORK" : "CREDENTIALS"}
+            </span>
+            <button onClick={onClose} className="close-detail">
+              <RollingText>Back to portfolio</RollingText>
+              <X size={20} />
+            </button>
+          </div>
           <motion.div
-            key="portfolio-content"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
+            key={
+              detail.kind === "project"
+                ? detail.project.slug
+                : detail.credential.id
+            }
+            initial={reduced ? false : { opacity: 0, y: 35 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease }}
           >
-            {/* Background Aurora */}
-            <div className="fixed inset-0 -z-10 pointer-events-none">
-              <Aurora
-                colorStops={["#7cff67","#B497CF","#5227FF"]}
-                blend={0.5}
-                amplitude={1.0}
-                speed={0.5}
-              />
+            {detail.kind === "project" ? (
+              <ProjectContent project={detail.project} />
+            ) : (
+              <CredentialContent credential={detail.credential} />
+            )}
+          </motion.div>
+        </div>
+      )}
+    </dialog>
+  );
+}
+
+function ProjectContent({ project }: { project: Project }) {
+  return (
+    <>
+      <div className="project-detail-meta">
+        <p className="eyebrow">{project.category}</p>
+        {project.status && (
+          <span className="project-status">{project.status}</span>
+        )}
+      </div>
+      <h2 id="detail-dialog-title">{project.title}</h2>
+      <div className="detail-art">
+        <ProjectArtwork slug={project.slug} />
+      </div>
+      <div className="detail-information">
+        <div>
+          <span className="eyebrow">/The project</span>
+          <h3>{project.fullTitle}</h3>
+          <p>{project.longDescription}</p>
+          {(project.liveUrl || project.repositoryUrl) && (
+            <div className="project-actions">
+              {project.liveUrl && (
+                <a
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="outline-link"
+                >
+                  <RollingText>Explore live project</RollingText>
+                  <ArrowUpRight size={18} />
+                </a>
+              )}
+              {project.repositoryUrl && (
+                <a
+                  href={project.repositoryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="outline-link"
+                >
+                  <RollingText>View source on GitHub</RollingText>
+                  <ArrowUpRight size={18} />
+                </a>
+              )}
             </div>
+          )}
+        </div>
+        <div>
+          <span className="eyebrow">/Core ideas</span>
+          <ul className="feature-list">
+            {project.features.map((feature) => (
+              <li key={feature}>{feature}</li>
+            ))}
+          </ul>
+          <div className="tags">
+            {project.tags.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="detail-ending">
+        <span>Have something in mind?</span>
+        <a href={`mailto:${identity.email}`}>
+          <RollingText>Let's build it together</RollingText>
+          <ArrowUpRight size={20} />
+        </a>
+      </div>
+    </>
+  );
+}
 
-            {/* Navigation */}
-            <div className="flex justify-center w-full">
-              <PillNav
-                logo={logo}
-                logoAlt="Haribot Logo"
-                items={navItems}
-                activeHref="#hero"
-                baseColor="rgba(0, 0, 0, 0.6)"
-                pillColor="#ffffff"
-                pillTextColor="#000000"
-                hoveredPillTextColor="#ffffff"
-              />
+function CredentialContent({ credential }: { credential: Credential }) {
+  return (
+    <>
+      <p className="eyebrow">{credential.provider} / Certification</p>
+      <h2 id="detail-dialog-title">{credential.title}</h2>
+      <div className="credential-detail-grid">
+        <div className="credential-proof">
+          <figure className="certificate-preview">
+            <img
+              src={credential.previewUrl}
+              alt={`${credential.title} certificate awarded to ${identity.name}`}
+              decoding="async"
+            />
+            <figcaption>The certificate / {credential.provider}</figcaption>
+          </figure>
+          <div className="credential-document-actions">
+            <a
+              className="outline-link"
+              href={credential.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <RollingText>Open original certificate</RollingText>
+              <ArrowUpRight size={18} />
+            </a>
+          </div>
+          <dl className="credential-facts">
+            <div>
+              <dt>Issued by</dt>
+              <dd>{credential.provider}</dd>
             </div>
-
-            {/* Main Section container */}
-            <main className="max-w-7xl mx-auto px-6 pt-32 pb-12 flex flex-col gap-32">
-
-              {/* HERO SECTION */}
-              <section id="hero" className="scroll-mt-32 flex flex-col items-center text-center gap-12">
-                <div className="space-y-4">
-                  <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic drop-shadow-2xl">
-                    Welcome to <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-white text-4xl md:text-6xl">My Portfolio</span>
-                  </h1>
-                  <p className="font-mono text-base text-white/70 uppercase tracking-widest max-w-2xl mx-auto">
-                    Building AI-Powered Products Through Software Engineering, Machine Learning, and Research-Driven Innovation.
-                  </p>
+            {credential.issuedOn && (
+              <div>
+                <dt>Earned on</dt>
+                <dd>{credential.issuedOn}</dd>
+              </div>
+            )}
+            {credential.expiresOn && (
+              <div>
+                <dt>Valid until</dt>
+                <dd>{credential.expiresOn}</dd>
+              </div>
+            )}
+            {credential.credentialId && (
+              <div className="credential-fact-id">
+                <dt>Credential ID</dt>
+                <dd>{credential.credentialId}</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+        <div className="credential-explanation">
+          <span className="eyebrow">/The credential</span>
+          <h3>What it demonstrates</h3>
+          <p className="credential-description">{credential.description}</p>
+          <div
+            className="tags credential-skills"
+            aria-label="Areas of knowledge"
+          >
+            {credential.skills.map((skill) => (
+              <span key={skill}>{skill}</span>
+            ))}
+          </div>
+          <div className="credential-concepts-heading">
+            <span className="eyebrow">/Knowledge into practice</span>
+            <h3>Skills &amp; concepts</h3>
+          </div>
+          <ol className="credential-concepts">
+            {credential.concepts.map((concept, index) => (
+              <li key={concept.title}>
+                <span className="concept-number" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <h4>{concept.title}</h4>
+                  <p>{concept.description}</p>
                 </div>
+              </li>
+            ))}
+          </ol>
+          {credential.sourceUrl && (
+            <a
+              className="credential-course-link"
+              href={credential.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <RollingText>Explore the official curriculum</RollingText>
+              <ArrowUpRight size={17} />
+            </a>
+          )}
+        </div>
+      </div>
+      <div className="detail-ending">
+        <span>Always learning. Always building.</span>
+        <a href="#work">
+          <RollingText>See selected work</RollingText>
+          <ArrowUpRight size={20} />
+        </a>
+      </div>
+    </>
+  );
+}
 
-                <Card className="w-full h-[500px] md:h-[700px] bg-white/5 backdrop-blur-xl border border-white/10 relative overflow-hidden flex items-center justify-center rounded-[2rem] shadow-2xl">
-                  {/* Centered Spline Viewport */}
-                  <div className="w-full h-full relative spline-outer-container flex items-center justify-center">
-                    <SplineScene
-                      scene={`${baseUrl}scene.splinecode`}
-                      className="w-full h-full object-cover scale-[1.08]"
-                    />
-                  </div>
+export default function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeCapability, setActiveCapability] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const [activeDetail, setActiveDetail] = useState(detailFromHash);
+  const menuRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const copyTimer = useRef<number | undefined>(undefined);
+  const heroRef = useRef<HTMLElement>(null);
+  const reduced = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const scrollProgress = useSpring(scrollYProgress, {
+    stiffness: 110,
+    damping: 30,
+  });
+  const { scrollYProgress: heroProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const heroY = useTransform(heroProgress, [0, 1], [0, reduced ? 0 : 75]);
 
-                  <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end pointer-events-none">
-                    <div className="bg-black/60 backdrop-blur-md p-4 rounded-xl border border-white/10">
-                      <p className="font-mono text-[10px] text-white/60 leading-none mb-2">SYSTEM STATUS</p>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="font-mono text-xs text-white">NEXBOT CORE ACTIVE</span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </section>
+  useEffect(() => {
+    const sync = () =>
+      setActiveDetail((current) => {
+        const next = detailFromHash();
+        if (
+          current?.kind === "project" &&
+          next?.kind === "project" &&
+          current.project === next.project
+        )
+          return current;
+        if (
+          current?.kind === "certification" &&
+          next?.kind === "certification" &&
+          current.credential === next.credential
+        )
+          return current;
+        return next;
+      });
+    window.addEventListener("popstate", sync);
+    window.addEventListener("hashchange", sync);
+    return () => {
+      window.removeEventListener("popstate", sync);
+      window.removeEventListener("hashchange", sync);
+      window.clearTimeout(copyTimer.current);
+    };
+  }, []);
 
-              {/* STATS SECTION (First Impression) */}
-              <ScrollVelocity
-                texts={[
-                  <div className="flex gap-4 px-2">
-                    {[
-                      { label: "Research Internship", value: "01+", icon: <GraduationCap className="w-4 h-4" /> },
-                      { label: "Hackathons", value: "05+", icon: <Rocket className="w-4 h-4" /> },
-                      { label: "National Top 10", value: "02", icon: <Trophy className="w-4 h-4" /> },
-                      { label: "Podium Finishes", value: "03", icon: <Sparkles className="w-4 h-4" /> },
-                      { label: "Projects Built", value: "10+", icon: <Code2 className="w-4 h-4" /> },
-                      { label: "Domains Expertise", value: "04+", icon: <Layers className="w-4 h-4" /> },
-                    ].map((stat, i) => (
-                      <div
-                        key={i}
-                        className="w-48 rounded-2xl border border-white/10 bg-white/10 p-4 flex flex-col items-center text-center gap-2"
-                      >
-                        <div className="p-2 rounded-lg bg-white/20 text-white/80">
-                          {stat.icon}
-                        </div>
-                        <p className="text-2xl font-black italic text-white">{stat.value}</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60 leading-tight">{stat.label}</p>
-                      </div>
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const links = Array.from(
+      menuRef.current?.querySelectorAll<HTMLAnchorElement>("a") || [],
+    );
+    const controls = [menuButtonRef.current, ...links].filter(
+      (control): control is HTMLButtonElement | HTMLAnchorElement =>
+        Boolean(control),
+    );
+    const focusFrame = window.requestAnimationFrame(() => links[0]?.focus());
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key !== "Tab") return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    window.addEventListener("keydown", keyboard);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", keyboard);
+      menuButtonRef.current?.focus();
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 810px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
+
+  function openProject(project: Project) {
+    window.history.pushState(
+      { portfolioProject: true },
+      "",
+      `#project/${project.slug}`,
+    );
+    setActiveDetail({ kind: "project", project });
+  }
+
+  function openCredential(credential: Credential) {
+    window.history.pushState(
+      { portfolioCertification: true },
+      "",
+      `#certification/${credential.id}`,
+    );
+    setActiveDetail({ kind: "certification", credential });
+  }
+
+  function closeDetail() {
+    if (
+      window.history.state?.portfolioProject ||
+      window.history.state?.portfolioCertification
+    )
+      window.history.back();
+    else {
+      const section =
+        activeDetail?.kind === "certification" ? "recognition" : "work";
+      window.history.replaceState(null, "", `#${section}`);
+      window.requestAnimationFrame(() =>
+        document
+          .getElementById(section)
+          ?.scrollIntoView({ behavior: reduced ? "instant" : "smooth" }),
+      );
+    }
+    setActiveDetail(undefined);
+  }
+
+  async function copyEmail() {
+    try {
+      await navigator.clipboard.writeText(identity.email);
+      setCopied(true);
+      setCopyFailed(false);
+      window.clearTimeout(copyTimer.current);
+      copyTimer.current = window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopyFailed(true);
+    }
+  }
+
+  return (
+    <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <Cursor />
+      <motion.div
+        className="scroll-progress"
+        style={{ scaleX: scrollProgress }}
+        aria-hidden="true"
+      />
+      <motion.header
+        className="site-header"
+        initial={reduced ? false : { y: -86 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 1.2, delay: 0.5, ease }}
+      >
+        <a
+          className="wordmark"
+          href="#home"
+          aria-label="Harish K, back to home"
+        >
+          <RollingText>
+            HARISH K<span className="brand-period">.</span>
+          </RollingText>
+        </a>
+        <nav className="desktop-nav" aria-label="Main navigation">
+          {navigation.map((item) => (
+            <a href={item.href} key={item.number}>
+              <RollingText>{item.label}</RollingText>
+              <sup>{item.number}</sup>
+            </a>
+          ))}
+        </nav>
+        <a className="outline-link header-contact" href="#contact">
+          <RollingText>Let's talk</RollingText>
+          <ArrowUpRight size={18} />
+        </a>
+        <button
+          ref={menuButtonRef}
+          className={`menu-toggle ${menuOpen ? "is-open" : ""}`}
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-navigation"
+          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+        >
+          <span />
+          <span />
+        </button>
+      </motion.header>
+      <nav
+        ref={menuRef}
+        id="mobile-navigation"
+        className={`mobile-navigation ${menuOpen ? "is-open" : ""}`}
+        aria-label="Mobile navigation"
+        inert={!menuOpen}
+      >
+        {[
+          ...navigation,
+          { label: "/Contact", href: "#contact", number: "04" },
+        ].map((item) => (
+          <a
+            key={item.number}
+            href={item.href}
+            onClick={() => setMenuOpen(false)}
+          >
+            <sup>{item.number}</sup>
+            {item.label}
+            <ArrowUpRight />
+          </a>
+        ))}
+        <a className="mobile-email" href={`mailto:${identity.email}`}>
+          {identity.email}
+        </a>
+      </nav>
+      <main id="main" inert={menuOpen}>
+        <section
+          className="hero"
+          id="home"
+          ref={heroRef}
+          aria-labelledby="hero-name"
+        >
+          <div className="hero-grid" aria-hidden="true">
+            <InteractiveGrid />
+          </div>
+          <motion.div style={{ y: heroY }} className="hero-composition">
+            <div className="hero-topline">
+              <span>SOFTWARE ENGINEER & AI DEVELOPER</span>
+              <span>PERSONAL PORTFOLIO / 2026</span>
+            </div>
+            <div className="hero-first-row">
+              <h1 id="hero-name" aria-label="Harish K">
+                <span className="name-mask">
+                  <motion.span
+                    aria-hidden="true"
+                    initial={reduced ? false : { y: "112%", rotate: 8 }}
+                    animate={{ y: "0%", rotate: 0 }}
+                    transition={{ duration: 1.2, ease }}
+                  >
+                    HARISH
+                  </motion.span>
+                </span>
+                <span className="visually-hidden"> K</span>
+              </h1>
+              <motion.div
+                className="hero-specialties"
+                initial={reduced ? false : { opacity: 0, y: 26 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2, delay: 0.6, ease }}
+              >
+                <ul>
+                  <li>FULL-STACK ENGINEERING</li>
+                  <li>ARTIFICIAL INTELLIGENCE</li>
+                  <li>RESEARCH & INNOVATION</li>
+                </ul>
+                <LocalTime />
+              </motion.div>
+            </div>
+            <div className="hero-second-row">
+              <motion.div
+                className="hero-introduction"
+                initial={reduced ? false : { opacity: 0, y: 70 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4, ease }}
+              >
+                <p>
+                  I turn complex ideas into{" "}
+                  <strong>intelligent products.</strong> Bringing thoughtful
+                  engineering and <strong>AI</strong> together to build things
+                  that matter.
+                </p>
+                <a className="text-link" href="#work">
+                  <RollingText>Explore selected work</RollingText>
+                  <ArrowDown size={18} />
+                </a>
+              </motion.div>
+              <div className="hero-last-name" aria-hidden="true">
+                <span className="name-mask">
+                  <motion.span
+                    initial={reduced ? false : { y: "112%", rotate: -8 }}
+                    animate={{ y: "0%", rotate: 0 }}
+                    transition={{ duration: 1.2, delay: 0.2, ease }}
+                  >
+                    K<span className="name-dot">.</span>
+                  </motion.span>
+                </span>
+              </div>
+            </div>
+            <motion.div
+              className="hero-bottomline"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.1, duration: 0.7 }}
+            >
+              <span>/Curiosity. Code. Craft.</span>
+              <a href="#work" aria-label="Scroll to selected work">
+                <span>SCROLL TO DISCOVER</span>
+                <ArrowDown size={17} />
+              </a>
+            </motion.div>
+          </motion.div>
+        </section>
+        <MotionReel />
+        <section
+          id="work"
+          className="work-section section-shell"
+          aria-label="Selected work"
+        >
+          <SectionTitle number="01">SELECTED WORKS</SectionTitle>
+          <nav className="work-index" aria-label="Project index">
+            {projects.map((project, index) => (
+              <a href={`#${project.slug}`} key={project.slug}>
+                <span className="index-number">0{index + 1}</span>
+                <RollingText>{project.title}</RollingText>
+              </a>
+            ))}
+          </nav>
+          <div className="projects">
+            {projects.map((project, index) => (
+              <article
+                id={project.slug}
+                className="project-row"
+                key={project.slug}
+              >
+                <Reveal className="project-summary">
+                  <span className="eyebrow">
+                    /0{index + 1} — {project.category}
+                    {project.status ? ` · ${project.status}` : ""}
+                  </span>
+                  <h3>{project.description}</h3>
+                  <div className="project-tags">
+                    {project.tags.slice(0, 3).map((tag) => (
+                      <span key={tag}>{tag}</span>
                     ))}
                   </div>
-                ]}
-                velocity={20}
-                className=""
-              />
-
-              {/* PERSONAL DETAILS SECTION */}
-              <section id="about" className="scroll-mt-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div className="space-y-8 order-2 lg:order-1">
-                  <div className="space-y-4">
-                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic text-white">
-                      About <br /> Me
-                    </h2>
-                    <div className="h-1 w-24 bg-white" />
+                  <button
+                    className="text-link project-read"
+                    onClick={() => openProject(project)}
+                  >
+                    <RollingText>Explore project</RollingText>
+                    <ArrowUpRight size={19} />
+                  </button>
+                </Reveal>
+                <Reveal className="project-preview" delay={0.1}>
+                  <button
+                    className="project-card"
+                    onClick={() => openProject(project)}
+                    aria-label={`View ${project.title} project`}
+                  >
+                    <ProjectArtwork slug={project.slug} />
+                    <span className="project-hover">
+                      <span>VIEW PROJECT</span>
+                      <ArrowUpRight size={22} />
+                    </span>
+                  </button>
+                  <div className="project-caption">
+                    <h3>{project.title.toUpperCase()}</h3>
+                    <span>0{index + 1} / 05</span>
                   </div>
-
-                  <div className="space-y-10 text-lg text-slate-300">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-white/10">
-                          <Sparkles className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold uppercase tracking-tight text-white italic">What I Do</h3>
-                      </div>
-                      <p className="text-lg text-slate-300 leading-relaxed">
-                        Build intelligent software products by combining <span className="text-white font-semibold italic">Full-Stack Engineering</span>, <span className="text-white font-semibold italic">Machine Learning</span>, and scalable system design.
-                      </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-white/10">
-                          <Cpu className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold uppercase tracking-tight text-white italic">Engineering Philosophy</h3>
-                      </div>
-                      <p className="text-lg text-slate-300 leading-relaxed">
-                        Design systems that are <span className="text-white font-semibold italic">scalable</span>, <span className="text-white font-semibold italic">maintainable</span>, <span className="text-white font-semibold italic">performant</span>, and built with users in mind.
-                      </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-white/10">
-                          <Rocket className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold uppercase tracking-tight text-white italic">Current Focus</h3>
-                      </div>
-                      <p className="text-lg text-slate-300 leading-relaxed">
-                        Developing AI-powered applications, privacy-preserving learning systems, and next-generation recommendation platforms.
-                      </p>
-                    </div>
-
-                    {/* Social Buttons */}
-                    <div className="flex items-center gap-4 flex-wrap pt-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => window.open('mailto:harish04211mw@gmail.com', '_blank')}
-                        className="rounded-lg hover:scale-110 transition-all duration-300 cursor-pointer bg-white/5 border-white/10"
+                </Reveal>
+              </article>
+            ))}
+          </div>
+          <Reveal className="work-end">
+            <span>Always making. Always learning.</span>
+            <a
+              className="text-link"
+              href={identity.github}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <RollingText>More experiments on GitHub</RollingText>
+              <ArrowUpRight size={18} />
+            </a>
+          </Reveal>
+        </section>
+        <section
+          id="expertise"
+          className="expertise-section section-shell"
+          aria-label="Technical expertise"
+        >
+          <SectionTitle number="02">MY EXPERTISE</SectionTitle>
+          <div className="section-label">/What I do</div>
+          <div className="capabilities">
+            {capabilities.map((capability, index) => (
+              <Reveal key={capability.id}>
+                <div
+                  className={`capability-row ${activeCapability === capability.id ? "expanded" : ""}`}
+                >
+                  <span className="capability-number">0{index + 1}</span>
+                  <div className="capability-content">
+                    <h3 className="capability-heading">
+                      <button
+                        className="capability-toggle"
+                        aria-expanded={activeCapability === capability.id}
+                        aria-controls={`capability-${capability.id}`}
+                        onClick={() =>
+                          setActiveCapability(
+                            activeCapability === capability.id
+                              ? null
+                              : capability.id,
+                          )
+                        }
                       >
-                        <img
-                          src="https://images.shadcnspace.com/assets/svgs/icon-google.svg"
-                          alt="email icon"
-                          className="h-4 w-4"
-                        />
-                        <span className="ml-2 text-xs font-bold uppercase tracking-tighter">Email</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => window.open('https://github.com/Harish-0412', '_blank')}
-                        className="rounded-lg hover:scale-110 transition-all duration-300 cursor-pointer bg-white/5 border-white/10"
-                      >
-                        <img
-                          src="https://images.shadcnspace.com/assets/svgs/icon-github-white.svg"
-                          alt="github icon"
-                          className="h-4 w-4"
-                        />
-                        <span className="ml-2 text-xs font-bold uppercase tracking-tighter">GitHub</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => window.open('https://www.linkedin.com/in/harish0412/', '_blank')}
-                        className="rounded-lg hover:scale-110 transition-all duration-300 cursor-pointer bg-white/5 border-white/10"
-                      >
-                        <img
-                          src="https://images.shadcnspace.com/assets/svgs/icon-linkedin.svg"
-                          alt="linkedin icon"
-                          className="h-4 w-4"
-                        />
-                        <span className="ml-2 text-xs font-bold uppercase tracking-tighter">LinkedIn</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="order-1 lg:order-2">
-                  <ProfileCard
-                    name="Harish K"
-                    title="Software Engineer & AI Developer"
-                    handle="harish_dev"
-                    status="Building something cool"
-                    contactText="Get in Touch"
-                    avatarUrl={`${baseUrl}profile.png`}
-                    showUserInfo={true}
-                    enableTilt={true}
-                    enableMobileTilt={true}
-                    behindGlowEnabled
-                    innerGradient="linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)"
-                    behindGlowColor="rgba(255, 255, 255, 0.1)"
-                  />
-                </div>
-              </section>
-
-              {/* SKILLS SECTION */}
-              <section id="skills" className="scroll-mt-32 space-y-16">
-                <div className="space-y-4">
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic text-white text-center lg:text-left">Technical Expertise</h2>
-                  <div className="h-1 w-24 bg-white mx-auto lg:mx-0" />
-                  <p className="text-white/70 max-w-3xl text-lg font-medium leading-relaxed italic">
-                    Experienced in Full-Stack Development, Artificial Intelligence, Mobile Application Development, and Data Analytics with hands-on expertise in building scalable software systems, machine learning solutions, and user-centric digital products.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {[
-                    {
-                      title: "Software Engineering",
-                      icon: <Terminal className="w-6 h-6" />,
-                      skills: ["Python", "JavaScript", "TypeScript", "Java", "C++", "Node.js", "Express.js", "React.js", "REST APIs"]
-                    },
-                    {
-                      title: "AI & Machine Learning",
-                      icon: <Brain className="w-6 h-6" />,
-                      skills: ["Deep Learning", "Computer Vision", "NLP", "Transformer Architectures", "RAG", "Model Training", "Evaluation"]
-                    },
-                    {
-                      title: "Mobile Development",
-                      icon: <Smartphone className="w-6 h-6" />,
-                      skills: ["Flutter", "Dart", "Kotlin", "Cross-Platform Dev", "Android Development"]
-                    },
-                    {
-                      title: "Database Systems",
-                      icon: <Database className="w-6 h-6" />,
-                      skills: ["PostgreSQL", "MySQL", "Database Design", "Query Optimization"]
-                    },
-                    {
-                      title: "Analytics & Visualization",
-                      icon: <BarChart3 className="w-6 h-6" />,
-                      skills: ["Power BI", "Tableau", "Data Analysis", "Business Intelligence"]
-                    },
-                    {
-                      title: "Design & Creative",
-                      icon: <Palette className="w-6 h-6" />,
-                      skills: ["Figma", "Blender", "UI/UX Prototyping", "3D Asset Design"]
-                    },
-                    {
-                      title: "Development Tools",
-                      icon: <Wrench className="w-6 h-6" />,
-                      skills: ["Git", "GitHub", "Jupyter Notebook", "VS Code", "Postman"]
-                    }
-                  ].map((domain, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: i * 0.1 }}
-                      className="group p-8 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all space-y-6"
+                        <span>{capability.title}</span>
+                        <Plus size={23} />
+                      </button>
+                    </h3>
+                    <p>{capability.description}</p>
+                    <div
+                      id={`capability-${capability.id}`}
+                      className="capability-skills"
+                      inert={activeCapability !== capability.id}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-2xl bg-white/10 text-white group-hover:scale-110 transition-transform">
-                          {domain.icon}
-                        </div>
-                        <h3 className="text-xl font-black uppercase italic tracking-tight text-white">{domain.title}</h3>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {domain.skills.map((skill, si) => (
-                          <span key={si} className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold uppercase tracking-wider text-white/60 group-hover:text-white transition-colors">
-                            {skill}
-                          </span>
+                      <div className="tags">
+                        {capability.skills.map((skill) => (
+                          <span key={skill}>{skill}</span>
                         ))}
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
-
-              {/* EXPERIENCE SECTION */}
-              <section id="experience" className="scroll-mt-32 space-y-16">
-                <div className="space-y-4">
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic text-white text-center lg:text-left">Experience</h2>
-                  <div className="h-1 w-24 bg-white mx-auto lg:mx-0" />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                  {/* Left Column: Text and Information */}
-                  <div className="space-y-12">
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      className="relative pl-8 md:pl-12 border-l border-white/10 py-4"
-                    >
-                      <div className="absolute left-[-9px] top-6 w-4 h-4 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
-                      <div className="space-y-4">
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                          <div className="space-y-1">
-                            <p className="font-mono text-sm text-white/60 uppercase tracking-widest">Research Intern</p>
-                            <h3 className="text-3xl font-black uppercase italic text-white tracking-tighter">National Institute of Technology Tiruchirappalli</h3>
-                            <p className="text-xl font-bold text-white/80">Deep Learning Research Intern</p>
-                          </div>
-                          <p className="font-mono text-sm text-white/60 uppercase tracking-widest bg-white/10 px-4 py-2 rounded-full border border-white/10 whitespace-nowrap">
-                            Duration: 1 Month
-                          </p>
-                        </div>
-
-                        <p className="text-lg text-white/70 leading-relaxed">
-                          Worked on advanced Deep Learning systems involving Transformer architectures and Retrieval-Augmented Generation (RAG) frameworks. Participated in research activities focused on improving information retrieval, contextual understanding, and intelligent knowledge generation using modern AI methodologies.
-                        </p>
-
-                        <div className="space-y-4">
-                          <p className="font-mono text-[10px] text-white/60 uppercase tracking-[0.3em]">Key Research Areas</p>
-                          <div className="flex flex-wrap gap-3">
-                            {["Transformer Models", "Large Language Models", "Retrieval-Augmented Generation (RAG)", "Deep Learning Research", "NLP Applications", "Experimental Evaluation"].map((area, i) => (
-                              <span key={i} className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-tighter text-white/90">
-                                {area}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* Right Column: PromptingIsAllYouNeed component */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    className="relative w-full aspect-[4/3] min-h-[350px] md:min-h-[400px] rounded-[2rem] border border-white/10 bg-black overflow-hidden shadow-2xl group"
-                  >
-                    <PromptingIsAllYouNeed />
-                  </motion.div>
-                </div>
-              </section>
-
-              {/* ACHIEVEMENTS SECTION */}
-              <section id="achievements" className="scroll-mt-32 space-y-16">
-                <div className="text-center space-y-4">
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic text-white">Competitive Achievements</h2>
-                  <div className="h-1 w-24 bg-white mx-auto" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[
-                    { title: "SiteFix Competition", rank: "3rd Place", desc: "Developed innovative technical solutions and secured a podium finish among competing teams." },
-                    { title: "NIT Technical Paper Presentation", rank: "2nd Place", desc: "Presented research-oriented technical concepts and achieved second place in a national-level academic competition." },
-                    { title: "Design Thinking Project Expo", rank: "3rd Place", desc: "Recognized for innovative problem-solving and product ideation." },
-                    { title: "NIT National Hackathon", rank: "Top 10 Finalist", desc: "Selected among the top-performing teams from a highly competitive participant pool." },
-                    { title: "Amrita Vishwa Vidyapeetham Hackathon", rank: "Top 10 Finalist", desc: "Built and presented a complete technical solution under strict competition timelines." },
-                    { title: "Additional Hackathons", rank: "5+ Participations", desc: "Worked on AI, software engineering, and innovation challenges in multidisciplinary teams." },
-                  ].map((ach, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: i * 0.05 }}
-                      className="group p-8 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all space-y-4"
-                    >
-                      <div className="flex items-start justify-between">
-                        <Trophy className="w-6 h-6 text-white/30 group-hover:text-white transition-colors" />
-                        <span className="px-3 py-1 rounded-full bg-white text-black text-[10px] font-black uppercase italic">
-                          {ach.rank}
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-black uppercase italic tracking-tight text-white">{ach.title}</h3>
-                        <p className="text-sm text-white/60 leading-relaxed group-hover:text-white/80 transition-colors">{ach.desc}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
-
-              {/* CERTIFICATIONS SECTION */}
-              <section className="scroll-mt-32 space-y-16">
-                <div className="space-y-4">
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic text-white">Certifications</h2>
-                  <div className="h-1 w-24 bg-white" />
-                </div>
-
-                <CertificationsTabs />
-              </section>
-
-              {/* PROJECTS SECTION */}
-              <section id="projects" className="scroll-mt-32 space-y-16">
-                <div className="text-center space-y-4">
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic text-white">Featured Projects</h2>
-                  <div className="h-1 w-24 bg-white mx-auto" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {[
-                    {
-                      title: "Secure-Edge-AI-Telemedicine-using-IoT-Diagnostics-and-Federated-Learning-for-Rural-Healthcare",
-                      desc: "TeleMed is an offline-first rural telemedicine platform built with React, Express, TypeScript, and PostgreSQL. It integrates IoT vital monitoring, AI-assisted screening, and low-bandwidth teleconsultation to deliver secure digital medical records, remote care, and early disease detection in low-connectivity environments.",
-                      tag: "TeleMed // Rural Healthcare",
-                      link: null
-                    },
-                    {
-                      title: "AI-Powered-Investment-Decision-Support-Platform",
-                      desc: "The AI-Powered Investment Decision Support Platform is a scalable fintech application that intelligently analyzes stock market data, tracks user portfolios, computes financial indicators, predicts trends, and provides personalized buy/sell investment recommendations using analytics, automation, and AI-driven decision support systems.",
-                      tag: "FinTech // Investment AI",
-                      link: "https://nvest-five.vercel.app"
-                    },
-                    {
-                      title: "Startup-Assisstant",
-                      desc: "A comprehensive AI-powered platform combining intelligent funding advisory for Indian startups with advanced document ingestion and RAG (Retrieval-Augmented Generation) capabilities.",
-                      tag: "Startup // RAG Advisory",
-                      link: "https://ai-verse-dun.vercel.app/"
-                    },
-                    {
-                      title: "RAG-Enhanced-Video-Scene-Understanding",
-                      desc: "VideoSceneRAG is a multimodal AI system that leverages computer vision, speech recognition, and large language models to understand video content at a semantic level. It enables users to ask questions about video content using natural language, get timestamped answers pinpointed to specific video scenes, and retrieve clips based on conceptual understanding.",
-                      tag: "Multimodal AI // Video RAG",
-                      link: null
-                    },
-                    {
-                      title: "Agentic-Workflow-Orchestration-for-Urban-Relocation-A-Hybrid-Cloud-Edge-Intelligence-Framework",
-                      desc: "NammaWay AI is a hyper-personalized ecosystem designed to bridge the gap between people and the services they use daily—whether it's finding the perfect place to stay, exploring a new city, or planning campus life. It respects your budget, explains its choices, and prioritizes your unique lifestyle.",
-                      tag: "Urban Mobility // Agentic AI",
-                      link: null
-                    }
-                  ].map((project, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: i * 0.1 }}
-                      className={`${i >= 3 ? 'lg:col-span-1' : ''}`}
-                    >
-                      <Card
-                        onClick={() => project.link && window.open(project.link, '_blank')}
-                        className={`group relative aspect-[4/3] bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden rounded-2xl hover:border-white/30 transition-all shadow-xl ${project.link ? 'cursor-pointer' : ''}`}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity z-10" />
-
-                        {/* Project Image Placeholder - Professional Gradients */}
-                        <div className={`absolute inset-0 -z-0 bg-gradient-to-br ${i % 3 === 0 ? 'from-blue-600/20 to-purple-600/20' :
-                          i % 3 === 1 ? 'from-emerald-600/20 to-cyan-600/20' :
-                            'from-orange-600/20 to-rose-600/20'
-                          } flex items-center justify-center`}>
-                          <Bot className="w-16 h-16 text-white/10 group-hover:scale-125 transition-transform duration-700 ease-out" />
-                        </div>
-
-                        <div className="absolute inset-0 p-8 flex flex-col justify-end gap-3 translate-y-6 group-hover:translate-y-0 transition-all duration-500 z-20">
-                          <div className="space-y-1">
-                            <p className="font-mono text-[10px] uppercase tracking-widest text-white/60">{project.tag}</p>
-                            <h3 className="text-xl font-black uppercase italic text-white tracking-tight leading-none group-hover:text-white transition-colors">
-                              {project.title}
-                            </h3>
-                          </div>
-
-                          <p className="text-[11px] text-white/60 line-clamp-3 opacity-0 group-hover:opacity-100 transition-opacity delay-100 leading-relaxed">
-                            {project.desc}
-                          </p>
-
-                          <div className="flex items-center gap-4 pt-2 opacity-0 group-hover:opacity-100 transition-opacity delay-200">
-                            {project.link && (
-                              <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-tighter text-white">
-                                <span>Live Demo</span>
-                                <ExternalLink size={12} />
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-tighter text-white/60">
-                              <span>Case Study</span>
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
-
-            </main>
-
-            {/* Footer */}
-            <footer className="border-t border-white/10 bg-black/40 backdrop-blur-md px-6 py-12 text-center text-xs font-mono text-white/60 mt-32">
-              <div className="flex flex-col md:flex-row items-center justify-between max-w-7xl mx-auto gap-8">
-                <div className="flex flex-col items-start gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded-lg">
-                      <Bot className="w-5 h-5 text-black" />
-                    </div>
-                    <span className="font-mono text-xl font-bold tracking-tight text-white">HARISH K</span>
-                  </div>
-                  <p className="text-left max-w-xs leading-relaxed uppercase text-white/60">
-                    Building clean, interactive web experiences with strong visual detail and thoughtful engineering.
-                  </p>
-                </div>
-
-                <div className="flex flex-col md:items-end gap-6">
-                  <div className="flex gap-8">
-                    <div className="space-y-2 text-left">
-                      <p className="text-[10px] text-white/60 uppercase tracking-widest">Navigation</p>
-                      <ul className="space-y-1 uppercase font-bold text-[11px] text-white/80">
-                        <li><a href="#hero" className="hover:text-white transition-colors">Home</a></li>
-                        <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
-                        <li><a href="#skills" className="hover:text-white transition-colors">Skills</a></li>
-                        <li><a href="#experience" className="hover:text-white transition-colors">Experience</a></li>
-                        <li><a href="#projects" className="hover:text-white transition-colors">Projects</a></li>
-                      </ul>
-                    </div>
-                    <div className="space-y-2 text-left">
-                      <p className="text-[10px] text-white/60 uppercase tracking-widest">Social</p>
-                      <div className="flex gap-4">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => window.open('https://github.com/Harish-0412', '_blank')}
-                          className="rounded-lg hover:scale-110 transition-all duration-300 cursor-pointer bg-white/5 border-white/10 w-8 h-8 p-0"
-                        >
-                          <img
-                            src="https://images.shadcnspace.com/assets/svgs/icon-github-white.svg"
-                            alt="github icon"
-                            className="h-3 w-3"
-                          />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => window.open('https://www.linkedin.com/in/harish0412/', '_blank')}
-                          className="rounded-lg hover:scale-110 transition-all duration-300 cursor-pointer bg-white/5 border-white/10 w-8 h-8 p-0"
-                        >
-                          <img
-                            src="https://images.shadcnspace.com/assets/svgs/icon-linkedin.svg"
-                            alt="linkedin icon"
-                            className="h-3 w-3"
-                          />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => window.open('mailto:harish04211mw@gmail.com', '_blank')}
-                          className="rounded-lg hover:scale-110 transition-all duration-300 cursor-pointer bg-white/5 border-white/10 w-8 h-8 p-0"
-                        >
-                          <img
-                            src="https://images.shadcnspace.com/assets/svgs/icon-google.svg"
-                            alt="email icon"
-                            className="h-3 w-3"
-                          />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col md:items-end gap-2">
-                    <span className="text-[10px] tracking-widest uppercase text-white/60">© {new Date().getFullYear()} HARISH K PORTFOLIO. ALL RIGHTS RESERVED.</span>
-                    <div className="flex gap-6 text-[10px] text-white/60 uppercase tracking-widest">
-                      <a href="#" className="hover:text-white transition-colors">Privacy Code</a>
-                      <a href="#" className="hover:text-white transition-colors">Restoration System</a>
                     </div>
                   </div>
                 </div>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+        <section
+          id="about"
+          className="about-section section-shell"
+          aria-label="About Harish"
+        >
+          <SectionTitle number="03">ABOUT HARISH</SectionTitle>
+          <div className="section-label">/How I think</div>
+          <Reveal>
+            <p className="about-statement">
+              Thoughtful engineering.
+              <br />
+              <span>Research-driven ideas.</span>
+              <br />
+              Products built with purpose.
+            </p>
+          </Reveal>
+          <div className="about-layout">
+            <Reveal className="portrait-wrap">
+              <div className="portrait-grid" aria-hidden="true" />
+              <img
+                src={`${import.meta.env.BASE_URL}profile.png`}
+                alt="Harish K"
+                width="433"
+                height="577"
+                loading="lazy"
+              />
+              <div className="portrait-caption">
+                <span>HARISH K</span>
+                <span>ENGINEER / BUILDER</span>
               </div>
-            </footer>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            </Reveal>
+            <Reveal className="about-copy" delay={0.15}>
+              <span className="eyebrow">/A little about me</span>
+              <h3>
+                At the intersection of software, intelligence, and possibility.
+              </h3>
+              <p>{identity.bio}</p>
+              <p>{identity.focus}</p>
+              <p className="about-philosophy">{identity.philosophy}</p>
+              <a href="#contact" className="outline-link">
+                <RollingText>Let's build something</RollingText>
+                <ArrowUpRight size={18} />
+              </a>
+            </Reveal>
+          </div>
+          <Reveal className="stats-strip">
+            {stats.map((stat) => (
+              <div className="stat" key={stat.label}>
+                <span>{stat.value}</span>
+                <p>{stat.label}</p>
+              </div>
+            ))}
+          </Reveal>
+        </section>
+        <section
+          id="experience"
+          className="research-section section-shell"
+          aria-label="Research experience"
+        >
+          <div className="section-label">/Research & experience</div>
+          <Reveal className="research-layout">
+            <div>
+              <span className="eyebrow">{experience.duration}</span>
+              <h2>{experience.role}</h2>
+            </div>
+            <div>
+              <h3>{experience.organization}</h3>
+              <p>{experience.description}</p>
+              <div className="tags">
+                {experience.areas.map((area) => (
+                  <span key={area}>{area}</span>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        </section>
+        <section
+          id="recognition"
+          className="recognition-section section-shell"
+          aria-label="Achievements and certifications"
+        >
+          <SectionTitle number="04">BEYOND THE CODE</SectionTitle>
+          <div className="recognition-layout">
+            <div>
+              <div className="section-label">/Achievements</div>
+              {achievements.map((achievement, index) => (
+                <Reveal
+                  className="achievement-row"
+                  key={achievement.title}
+                  delay={index * 0.03}
+                >
+                  <span className="achievement-index">0{index + 1}</span>
+                  <div>
+                    <h3>{achievement.title}</h3>
+                    <p>{achievement.description}</p>
+                  </div>
+                  <span className="achievement-rank">{achievement.rank}</span>
+                </Reveal>
+              ))}
+            </div>
+            <div className="credentials" id="certifications">
+              <div className="section-label">/Always learning</div>
+              {credentials.map((credential, index) => (
+                <Reveal key={credential.id} delay={index * 0.03}>
+                  <button
+                    className="credential-row"
+                    onClick={() => openCredential(credential)}
+                    aria-label={`View ${credential.title} certificate`}
+                  >
+                    <span className="credential-index">0{index + 1}</span>
+                    <span>
+                      <small>{credential.provider}</small>
+                      <h3>{credential.title}</h3>
+                    </span>
+                    <ArrowUpRight size={21} />
+                  </button>
+                </Reveal>
+              ))}
+              <p className="credential-note">
+                A foundation in AI, backed by continuous learning.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer
+        inert={menuOpen}
+        id="contact"
+        className="contact-section section-shell"
+      >
+        <div className="footer-socials">
+          <a href={identity.github} target="_blank" rel="noopener noreferrer">
+            <RollingText>GITHUB</RollingText>
+            <ArrowUpRight size={16} />
+          </a>
+          <a href={identity.linkedin} target="_blank" rel="noopener noreferrer">
+            <RollingText>LINKEDIN</RollingText>
+            <ArrowUpRight size={16} />
+          </a>
+          <a href={`mailto:${identity.email}`}>
+            <RollingText>EMAIL</RollingText>
+            <ArrowUpRight size={16} />
+          </a>
+          <a className="back-to-top" href="#home">
+            <RollingText>Back to top</RollingText>
+            <ArrowUp size={16} />
+          </a>
+        </div>
+        <Reveal className="contact-layout">
+          <div>
+            <span className="eyebrow">/Have a good problem?</span>
+            <h2>
+              LET'S BUILD
+              <br />
+              SOMETHING
+              <span className="footer-star" aria-hidden="true">
+                *
+              </span>
+            </h2>
+          </div>
+          <div className="contact-copy">
+            <p>
+              A project, a research idea, or a conversation about what's next.
+              I'd love to hear what you're thinking.
+            </p>
+            <div className="email-line">
+              <a href={`mailto:${identity.email}`}>
+                <RollingText>{identity.email}</RollingText>
+              </a>
+              <button
+                className="copy-button"
+                onClick={copyEmail}
+                aria-label="Copy email address"
+              >
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+              </button>
+            </div>
+            <span className="copy-status" role="status">
+              {copied
+                ? "Email copied to clipboard."
+                : copyFailed
+                  ? "Select the address to copy it, or click it to send an email."
+                  : ""}
+            </span>
+          </div>
+        </Reveal>
+        <div className="footer-name" aria-hidden="true">
+          HARISH K.
+        </div>
+        <div className="footer-bottom">
+          <span>
+            © {new Date().getFullYear()} Harish K. All rights reserved.
+          </span>
+          <span>BUILT WITH INTENT.</span>
+          <LocalTime />
+        </div>
+      </footer>
+      <DetailDialog detail={activeDetail} onClose={closeDetail} />
+    </>
   );
 }
